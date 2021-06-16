@@ -110,11 +110,9 @@ public class FoodDao {
 		}
 
 	}
-	
-
-	public List<String> getVertici(Integer calorie){
-		String sql = "SELECT DISTINCT p.portion_display_name AS tipo "
-				+ "FROM `portion`  p "
+	public void getVertici(List<String> list,Integer calorie){
+		String sql = "SELECT DISTINCT p.portion_display_name as nome "
+				+ "FROM `portion` p "
 				+ "WHERE p.calories<? " ;
 		try {
 			Connection conn = DBConnect.getConnection() ;
@@ -122,30 +120,28 @@ public class FoodDao {
 			PreparedStatement st = conn.prepareStatement(sql) ;
 			st.setInt(1, calorie);
 			
-			List<String> list = new ArrayList<>() ;
+			
 			
 			ResultSet res = st.executeQuery() ;
 			
 			while(res.next()) {
-				list.add(res.getString("tipo"));
+			list.add(res.getString("nome"));
 			}
 			
 			conn.close();
-			return list ;
+			
 
 		} catch (SQLException e) {
 			e.printStackTrace();
-			return null ;
+			
 		}
 
 	}
-
-	public List<Adiacenza> getAdiacenze(Integer calorie,List<String> categorie){
-		String sql = "SELECT  distinct p1.portion_display_name AS pe1, p2.portion_display_name AS pe2, COUNT(p1.food_code) AS peso "
-				+ "FROM `portion`  p1,`portion`  p2 "
-				+ "WHERE p1.food_code=p2.food_code "
-				+ "AND p1.portion_id> p2.portion_id "
-				+ "AND p1.portion_display_name> p2.portion_display_name "
+	public List<Adiacenza> getAdiacenze(List<String> vertici,int calorie){
+		String sql = "SELECT p1.portion_display_name AS id1, p2.portion_display_name AS id2, COUNT(distinct p1.food_code) AS peso "
+				+ "FROM `portion` p1,`portion` p2 "
+				+ "WHERE p1.portion_id> p2.portion_id "
+				+ "AND p1.food_code=p2.food_code "
 				+ "AND p1.calories<? AND p2.calories<? "
 				+ "GROUP BY p1.portion_display_name, p2.portion_display_name " ;
 		try {
@@ -160,13 +156,13 @@ public class FoodDao {
 			ResultSet res = st.executeQuery() ;
 			
 			while(res.next()) {
-				if(categorie.contains(res.getString("pe1"))&& categorie.contains(res.getString("pe2")))
-				{
-					Adiacenza a=new Adiacenza(res.getString("pe1"), res.getString("pe2"),res.getInt("peso"));
-					list.add(a);
-				}
-			
+				if(vertici.contains(res.getString("id1")) && vertici.contains(res.getString("id2")))
+						{
+							Adiacenza a=new Adiacenza(res.getString("id1"),res.getString("id2"),res.getInt("peso"));
+							list.add(a);
+						}
 			}
+			
 			conn.close();
 			return list ;
 

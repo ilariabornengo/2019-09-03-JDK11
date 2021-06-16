@@ -12,10 +12,13 @@ import org.jgrapht.graph.SimpleWeightedGraph;
 import it.polito.tdp.food.db.FoodDao;
 
 public class Model {
+	
 	FoodDao dao;
-	Graph<String,DefaultWeightedEdge>grafo;
-	List<String> camminoBest;
-	Integer pesoMax;
+	List<String> porzioni;
+	Graph<String,DefaultWeightedEdge> grafo;
+	List<String> listaBest;
+	int pesoMax;
+	
 	public Model()
 	{
 		this.dao=new FoodDao();
@@ -23,109 +26,98 @@ public class Model {
 	
 	public void creaGrafo(Integer calorie)
 	{
-		this.grafo=new SimpleWeightedGraph<String,DefaultWeightedEdge>(DefaultWeightedEdge.class);
+		this.porzioni=new ArrayList<String>();
+		this.grafo= new SimpleWeightedGraph<String,DefaultWeightedEdge>(DefaultWeightedEdge.class);
+		
 		//aggiungo i vertici
-		List<String> vertici=new ArrayList<String>(this.dao.getVertici(calorie));
-		Graphs.addAllVertices(this.grafo, vertici);
+		this.dao.getVertici(porzioni, calorie);
+		Graphs.addAllVertices(this.grafo, this.porzioni);
 		
 		//aggiungo gli archi
-		for(Adiacenza a:this.dao.getAdiacenze(calorie, vertici))
+		for(Adiacenza a:this.dao.getAdiacenze(porzioni, calorie))
 		{
-			if(this.grafo.vertexSet().contains(a.getP1()) && this.grafo.vertexSet().contains(a.getP2()))
+			if(this.grafo.vertexSet().contains(a.getTipo1()) && this.grafo.vertexSet().contains(a.getTipo2()))
 			{
-				Graphs.addEdge(this.grafo, a.getP1(), a.getP2(), a.getPeso());
+				Graphs.addEdge(this.grafo, a.getTipo1(), a.getTipo2(), a.getPeso());
 			}
 		}
 	}
-	public List<String> getPorzioni()
-	{
-		List<String> porzioni=new ArrayList<String>(this.grafo.vertexSet());
-		Collections.sort(porzioni, new ComparatorNome());
-		return porzioni;
-	}
 	
-	public List<String> getBestCammino(String partenza, Integer N )
+	public List<String> camminoBest(String partenza,Integer N)
 	{
-		this.camminoBest=new ArrayList<String>();
+		this.listaBest=new ArrayList<String>();
 		List<String> parziale=new ArrayList<String>();
+		this.pesoMax=0;
 		parziale.add(partenza);
-		pesoMax=0;
-		ricorsione(parziale,1,N);
-		return this.camminoBest;
+		ricorsione(parziale,N);
+		return this.listaBest;
 	}
-	
-	
+	private void ricorsione(List<String> parziale, Integer N) {
 		
-	
-	private void ricorsione(List<String> parziale, int i, Integer N) {
-		String ultimo=parziale.get(parziale.size()-1);
-		//condizione di terminazioneù
-		//N+1 perchè partiamo da 1 avendo messo parziale
-		if(i==N+1)
+		//caso terminale
+		if(parziale.size()==N)
 		{
-			int peso=calcolaPeso(parziale);
-			
-				if(peso>this.pesoMax)
-				{
-					this.camminoBest=new ArrayList<String>(parziale);
-					this.pesoMax=peso;
-					return;
-				}
-				else
-				{
-					return;
-				}
-			
+			int pesoP=getpeso(parziale);
+			if(pesoP>this.pesoMax)
+			{
+				this.pesoMax=pesoP;
+				this.listaBest=new ArrayList<String>(parziale);
+				return;
+			}
+			else
+			{
+				return;
+			}
 		}
 		
 		//fuori dal caso terminale
+		String ultimo=parziale.get(parziale.size()-1);
 		for(String s:Graphs.neighborListOf(this.grafo, ultimo))
 		{
-			if(!parziale.contains(s) && i<=N)
+			if(!parziale.contains(s))
 			{
 				parziale.add(s);
-				ricorsione(parziale,i+1,N);
-				parziale.remove(parziale.size()-1);
+				ricorsione(parziale,N);
+				parziale.remove(s);
 			}
 		}
 		
 	}
 
-	public Integer getpesoMax()
-	{
-		return this.pesoMax;
-	}
-	private int calcolaPeso(List<String> parziale) {
-		Integer pesoTot=0;
+	public int getpeso(List<String> parziale) {
+		int pesoTot=0;
 		for(int i=1;i<parziale.size();i++)
 		{
-			String v1=parziale.get(i-1);
-			String v2=parziale.get(i);
-			Integer peso=(int) this.grafo.getEdgeWeight(this.grafo.getEdge(v1, v2));
+			String s1=parziale.get(i-1);
+			String s2=parziale.get(i);
+			int peso=(int) this.grafo.getEdgeWeight(this.grafo.getEdge(s1, s2));
 			pesoTot+=peso;
 		}
-		
 		return pesoTot;
 	}
 
-	public List<Adiacenza> getCorrelati(String categoria)
+	public List<Adiacenza> correlate(String porzione)
 	{
-		List<Adiacenza> correlate=new ArrayList<Adiacenza>();
-		for(String s:Graphs.neighborListOf(this.grafo, categoria))
+		List<Adiacenza> vicini=new ArrayList<Adiacenza>();
+		for(String s:Graphs.neighborListOf(this.grafo, porzione))
 		{
-			Adiacenza ad=new Adiacenza(categoria,s,(int)this.grafo.getEdgeWeight(this.grafo.getEdge(categoria, s)));
-			correlate.add(ad);
+			int peso=(int) this.grafo.getEdgeWeight(this.grafo.getEdge(porzione, s));
+			Adiacenza ad=new Adiacenza(porzione,s,peso);
+			vicini.add(ad);
 		}
-		return correlate;
+		return vicini;
 	}
-	
-	public int getVertici()
+	public List<String> tipiPorzioni(Integer calorie)
 	{
-		return this.grafo.vertexSet().size();
+		List<String> porz=new ArrayList<String>(porzioni);
+		return porz;
 	}
-	
 	public int getArchi()
 	{
 		return this.grafo.edgeSet().size();
+	}
+	public int getVertici()
+	{
+		return this.grafo.vertexSet().size();
 	}
 }

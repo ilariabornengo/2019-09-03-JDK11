@@ -52,34 +52,34 @@ public class FoodController {
     @FXML
     void doCammino(ActionEvent event) {
     	txtResult.clear();
-    	txtResult.appendText("Cerco cammino peso massimo...\n");
-    	String partenza=this.boxPorzioni.getValue();
-    	String NS=this.txtPassi.getText();
+    	String categoria=this.boxPorzioni.getValue();
+    	String Ns=this.txtPassi.getText();
     	Integer N=0;
     	try {
-    		N=Integer.parseInt(NS);
+    		N=Integer.parseInt(Ns);
     	}catch(NumberFormatException e)
     	{
     		e.printStackTrace();
     	}
-    	List<String> cammino=this.model.getBestCammino(partenza, N);
-    	for(String s:cammino)
+    	List<String> camminoBest=new ArrayList<String>(this.model.camminoBest(categoria, N));
+    	txtResult.appendText("IL CAMMINO MASSIMO E' DATO DA:\n");
+    	for(String s:camminoBest)
     	{
     		txtResult.appendText(s+"\n");
     	}
-    	txtResult.appendText("IL PESO TOTALE E' DI "+this.model.getpesoMax());
+    	txtResult.appendText("IL PESO TOTALE E': "+this.model.getpeso(camminoBest));
     }
 
     @FXML
     void doCorrelate(ActionEvent event) {
     	txtResult.clear();
     	txtResult.appendText("Cerco porzioni correlate...\n");
-    	String scelta=this.boxPorzioni.getValue();
-    	List<Adiacenza> adiacenze=new ArrayList<Adiacenza>(this.model.getCorrelati(scelta));
-    	txtResult.appendText("ELEMENTI ADIACENTI A "+scelta+"\n");
-    	for(Adiacenza a: adiacenze)
+    	String categoria=this.boxPorzioni.getValue();
+    	List<Adiacenza> vicini=new ArrayList<Adiacenza>(this.model.correlate(categoria));
+    	txtResult.appendText("LE PORZIONI CORRELATE A "+categoria+" SONO:\n");
+    	for(Adiacenza a:vicini)
     	{
-    		txtResult.appendText(a.getP2()+" - "+a.getPeso()+"\n");
+    		txtResult.appendText(a.getTipo2()+" - "+a.getPeso()+"\n");
     	}
     }
 
@@ -87,19 +87,19 @@ public class FoodController {
     void doCreaGrafo(ActionEvent event) {
     	txtResult.clear();
     	txtResult.appendText("Creazione grafo...");
-    	String c=this.txtCalorie.getText();
+    	String Cs=this.txtCalorie.getText();
     	Integer C=0;
     	try {
-    		C=Integer.parseInt(c);
+    		C=Integer.parseInt(Cs);
     	}catch(NumberFormatException e)
     	{
     		e.printStackTrace();
     	}
     	this.model.creaGrafo(C);
-    	this.txtResult.appendText("GRAFO CREATO!!\n");
+    	this.txtResult.appendText("Grafo creato!!\n");
     	this.txtResult.appendText("# archi: "+this.model.getArchi()+"\n");
-    	this.txtResult.appendText("#vertici: "+this.model.getVertici()+"\n");
-    	this.boxPorzioni.getItems().addAll(this.model.getPorzioni());
+    	this.txtResult.appendText("# vertici: "+this.model.getVertici()+"\n");
+    	this.boxPorzioni.getItems().addAll(this.model.tipiPorzioni(C));
     }
 
     @FXML // This method is called by the FXMLLoader when initialization is complete
