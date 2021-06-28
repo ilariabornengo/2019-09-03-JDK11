@@ -110,8 +110,9 @@ public class FoodDao {
 		}
 
 	}
-	public void getVertici(List<String> list,Integer calorie){
-		String sql = "SELECT DISTINCT p.portion_display_name as nome "
+	
+	public void getVertci(List<String> vertici,Integer calorie){
+		String sql = "SELECT DISTINCT p.portion_display_name AS nome "
 				+ "FROM `portion` p "
 				+ "WHERE p.calories<? " ;
 		try {
@@ -120,12 +121,15 @@ public class FoodDao {
 			PreparedStatement st = conn.prepareStatement(sql) ;
 			st.setInt(1, calorie);
 			
-			
+			List<Portion> list = new ArrayList<>() ;
 			
 			ResultSet res = st.executeQuery() ;
 			
 			while(res.next()) {
-			list.add(res.getString("nome"));
+				if(!vertici.contains(res.getString("nome")))
+				{
+					vertici.add(res.getString("nome"));
+				}
 			}
 			
 			conn.close();
@@ -137,11 +141,12 @@ public class FoodDao {
 		}
 
 	}
-	public List<Adiacenza> getAdiacenze(List<String> vertici,int calorie){
+	
+	public List<Adiacenza> getAdiacenze(List<String> vertici,Integer calorie){
 		String sql = "SELECT p1.portion_display_name AS id1, p2.portion_display_name AS id2, COUNT(distinct p1.food_code) AS peso "
 				+ "FROM `portion` p1,`portion` p2 "
-				+ "WHERE p1.portion_id> p2.portion_id "
-				+ "AND p1.food_code=p2.food_code "
+				+ "WHERE p1.food_code=p2.food_code "
+				+ "AND p1.portion_display_name> p2.portion_display_name "
 				+ "AND p1.calories<? AND p2.calories<? "
 				+ "GROUP BY p1.portion_display_name, p2.portion_display_name " ;
 		try {
@@ -157,10 +162,10 @@ public class FoodDao {
 			
 			while(res.next()) {
 				if(vertici.contains(res.getString("id1")) && vertici.contains(res.getString("id2")))
-						{
-							Adiacenza a=new Adiacenza(res.getString("id1"),res.getString("id2"),res.getInt("peso"));
-							list.add(a);
-						}
+				{
+					Adiacenza a=new Adiacenza(res.getString("id1"),res.getString("id2"),res.getInt("peso"));
+					list.add(a);
+				}
 			}
 			
 			conn.close();
@@ -172,5 +177,4 @@ public class FoodDao {
 		}
 
 	}
-	
 }
